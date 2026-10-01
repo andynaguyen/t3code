@@ -1,5 +1,6 @@
 "use client";
 
+import { useAtomValue } from "@effect/atom-react";
 import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import {
   isAtomCommandInterrupted,
@@ -40,6 +41,8 @@ import {
   usePreviewMiniPlayerStore,
 } from "~/previewMiniPlayerStore";
 import { useRightPanelStore } from "~/rightPanelStore";
+import { shortcutLabelForCommand } from "~/keybindings";
+import { primaryServerKeybindingsAtom } from "~/state/server";
 
 import { previewBridge } from "./previewBridge";
 import { subscribePreviewAction } from "./previewActionBus";
@@ -123,6 +126,7 @@ export function PreviewView({
   );
   const addPreviewAnnotation = useComposerDraftStore((store) => store.addPreviewAnnotation);
   const addImage = useComposerDraftStore((store) => store.addImage);
+  const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const environmentHttpBaseUrl = useEnvironmentHttpBaseUrl(threadRef.environmentId);
   const environmentHostname = environmentHttpBaseUrl
     ? new URL(environmentHttpBaseUrl).hostname
@@ -158,6 +162,7 @@ export function PreviewView({
   const canGoForward = desktopOverlay?.canGoForward ?? snapshot?.canGoForward ?? false;
   const refreshDisabled = navStatus._tag === "Idle";
   const isUnreachable = navStatus._tag === "LoadFailed";
+  const pickDisabled = !tabId || isUnreachable;
   const showEmptyState = shouldShowPreviewEmptyState(snapshot);
   const controller = desktopOverlay?.controller ?? "none";
   const viewport = snapshot?.viewport ?? FILL_PREVIEW_VIEWPORT;
@@ -699,11 +704,24 @@ export function PreviewView({
         case "reset-zoom":
           handleResetZoom();
           return;
+        case "annotate":
+          if (!pickDisabled) {
+            handlePickElement();
+          }
+          return;
         case "toggle-panel":
           return;
       }
     });
-  }, [handleRefresh, handleResetZoom, handleZoomIn, handleZoomOut, visible]);
+  }, [
+    handleRefresh,
+    handlePickElement,
+    handleResetZoom,
+    handleZoomIn,
+    handleZoomOut,
+    pickDisabled,
+    visible,
+  ]);
 
   return (
     <div
@@ -730,10 +748,10 @@ export function PreviewView({
         pictureInPictureDisabled={!desktopOverlay?.hasWebContents || isUnreachable}
         onPickElement={previewBridge && tabId ? handlePickElement : undefined}
         pickActive={pickActive}
-        // Disable when there's no tab (nothing to pick on) OR the page
-        // failed to load (a React overlay covers the webview, so the
-        // user wouldn't be able to actually click anything underneath).
-        pickDisabled={!tabId || isUnreachable}
+        pickDisabled={pickDisabled}
+        pickShortcutLabel={shortcutLabelForCommand(keybindings, "preview.annotate", {
+          context: { previewOpen: true },
+        })}
         pickDisabledReason={
           isUnreachable ? "Page didn't load — pick unavailable until the page renders" : undefined
         }

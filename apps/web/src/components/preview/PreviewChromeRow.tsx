@@ -52,6 +52,7 @@ interface Props {
   pickDisabled?: boolean | undefined;
   /** Optional reason string surfaced in the disabled tooltip. */
   pickDisabledReason?: string | undefined;
+  pickShortcutLabel?: string | null | undefined;
   /**
    * Trailing slot rendered after the URL input. Used by the preview view
    * to mount the three-dot menu (hard reload, devtools, zoom, clear data).
@@ -89,6 +90,7 @@ export function PreviewChromeRow({
   pickActive,
   pickDisabled,
   pickDisabledReason,
+  pickShortcutLabel,
   trailingActions,
   leadingActions,
 }: Props) {
@@ -254,7 +256,7 @@ export function PreviewChromeRow({
                 ? pickDisabledReason
                 : pickActive
                   ? "Cancel annotation (Esc)"
-                  : "Annotate elements, regions, and drawings"}
+                  : `Annotate elements, regions, and drawings${pickShortcutLabel ? ` (${pickShortcutLabel})` : ""}`}
             </TooltipPopup>
           </Tooltip>
         ) : null}
