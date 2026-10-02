@@ -6785,7 +6785,9 @@ export default function ChatView(props: ChatViewProps) {
       if (command === "preview.annotate") {
         event.preventDefault();
         event.stopPropagation();
-        dispatchPreviewAction("annotate");
+        if (!event.repeat) {
+          dispatchPreviewAction("annotate");
+        }
         return;
       }
 
